@@ -2,7 +2,9 @@ from time import sleep
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from pathlib import Path
 from bs4 import BeautifulSoup
 import openpyxl
@@ -11,6 +13,7 @@ import openpyxl
 ROOT_FOLDER = Path(__file__).parent
 ROOT_FILE = ROOT_FOLDER / 'chromedriver.exe'
 ROOT_CHROME_DRIVER = str(ROOT_FILE)
+CONTENT = ''
 
 
 # Configurando as conexões de serviço
@@ -46,29 +49,41 @@ soup = BeautifulSoup(browser.page_source, 'html.parser')
 
 # Declarando a lista principal de dados
 list_data = []
+lista_completa = []
 
 # Encontrando o valor do botão proxima pagins
 next_page_button = browser.find_element(
     By.XPATH, '//div[@class="paginationBtn paginationNextContainer"]')
 
+# Função que extrai os dados
 
-table_rows = soup.find_all("tr", {'class': 'table__row'})
 
-while next_page_button == browser.find_element(By.XPATH, '//div[@class="paginationBtn paginationNextContainer"]'):
-    number = len(list_data)
-    for i in range(number):
-        content = table_rows[i].contents
-        for i, valor in enumerate(content):
-            Content_Line = content[i].text
+def return_rows(list_data: list, lista_completa: list):
+    table_rows = soup.find_all("tr", {'class': 'table__row'})
+    for i in range(10):
+        CONTENT = table_rows[i].contents
+        for i, valor in enumerate(CONTENT):
+            Content_Line = CONTENT[i].text
             Unique_Values = [' ', '\xa0']
             if Content_Line not in Unique_Values:
                 list_data.append(Content_Line.strip())
-    sleep(1)
+            lista_completa.extend(list_data)
+            list_data = []
+
+    return print(lista_completa)
+
+
+while next_page_button == browser.find_element(By.XPATH, '//div[@class="paginationBtn paginationNextContainer"]'):
 
     next_page_button.click()
-    print(list_data)
 
-    sleep(1)
+    wait = WebDriverWait(browser, 2)
+    element = wait.until(EC.presence_of_element_located(
+        (By.CLASS_NAME, "paginationBtn paginationNextContainer")))
+
+    return_rows(list_data, lista_completa)
+
+    sleep(2)
 
 # for i in range(10):
 #     content = table_rows[i].contents
