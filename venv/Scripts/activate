@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\Tecnologia\Desktop\Python\Projeto_Premier League\venv"
+VIRTUAL_ENV="C:\Users\nival\OneDrive\Área de Trabalho\Projetos\Python\Projeto Web Scraping Premier League\WebScraping-Premier-League\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
