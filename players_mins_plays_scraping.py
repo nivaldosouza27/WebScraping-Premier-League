@@ -19,7 +19,8 @@ FIND = []
 
 """ DEFININDO AS URL's DO SCRAPING"""
 URL_MAIN = 'https://www.premierleague.com/stats/top/players/'
-VARS_URLS = ['goals', 'goal_assist', 'clean_sheet', 'appearances', 'mins_played']
+VARS_URLS = ['goals', 'goal_assist',
+             'clean_sheet', 'appearances', 'mins_played']
 
 ''' CONFIGURANDO AS DEFINIÇÕES DE ACESSOS HTTP'''
 
@@ -75,7 +76,8 @@ def save_to_excel(list: list):
 
     for lista_interna in list:
         # Dividir a lista interna em partes de 5 elementos
-        partes = [lista_interna[i:i+5] for i in range(0, len(lista_interna), 5)]
+        partes = [lista_interna[i:i+5]
+                  for i in range(0, len(lista_interna), 5)]
 
         # Adicionar cada parte como uma linha na planilha
         planilha.extend(partes)
