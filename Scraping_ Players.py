@@ -9,17 +9,21 @@ from selenium.webdriver.common.by import By
 from pathlib import Path
 import pandas as pd
 
+
 # Definindo as Variaveis de ambiente
 ROOT_FOLDER = Path(__file__).parent
 ROOT_FILE = ROOT_FOLDER / 'chromedriver.exe'
 ROOT_CHROME_DRIVER = str(ROOT_FILE)
-LISTA_DADOS = []
-FIND = []
-
 
 """ DEFININDO AS URL's DO SCRAPING"""
-URL_MAIN = str('https://www.premierleague.com/stats/top/clubs/')
-VARS_URLS = ['wins', 'losses', 'goals', 'clean_sheet']
+URL_MAIN = str('https://www.premierleague.com/stats/top/players/')
+VARS_URLS = ['goals', 'goal_assist',
+             'clean_sheet', 'appearances', 'mins_played']
+ACTUAL_URL = ''
+FIND = []
+LISTA_DADOS = []
+CONT = 0
+
 
 ''' CONFIGURANDO AS DEFINIÇÕES DE ACESSOS HTTP'''
 
@@ -29,8 +33,8 @@ service = Service(executable_path=ROOT_CHROME_DRIVER)
 # Configurando as options do webdriver
 options = Options()
 options.add_argument('window-size=1920,1080')
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
-AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
+# options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
+# AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
 # options.add_argument('---headless')
 
 # Configurando o browser e URL de Acesso
@@ -45,7 +49,7 @@ WebDriverWait(browser, 1).until(
 )
 print('Botão Cokkies encontrado...Ok')
 
-# Clicando no botão correspondente a aceitar os cokkies d navegação
+# Clicando no botão correspondente a aceitar os cokkies de navegação
 browser.switch_to.default_content()
 button_cokkies = browser.find_element(By.XPATH, '//button[@id=\
                                 "onetrust-accept-btn-handler"]')
@@ -55,41 +59,13 @@ print('Botão Cokkies fechado...Ok')
 sleep(1)
 
 
-# Definindo a Função que extrai os dados de cada tabela
-def return_rows(list_data: list):
-    elemento = browser.find_elements(By.XPATH, "//tbody \
-            [@class='stats-table__container statsTableContainer']")
-    for elementos in elemento:
-        FIND = elementos.text.split('\n')
-        list_data.append(FIND)
-    return list_data
-
-
-# Definindo a Função que salva os dados no excel
-def save_to_excel(list: list):
-    planilha = []
-    partes = []
-
-    for lista_interna in list:
-        # Dividir a lista interna em partes de 5 elementos
-        partes = [lista_interna[i:i+3]for i in range(0, len(lista_interna), 3)]
-
-        # Adicionar cada parte como uma linha na planilha
-        planilha.extend(partes)
-
-    df = pd.DataFrame(planilha)
-    df.to_excel(f'clubs_{url}_new.xlsx', index=False)
-
-    return None
-
-
-# Criando um loop para iterar sobre as variaveis de URLS
 for index, url in enumerate(VARS_URLS):
 
     # Acessando a nova página
     print('Acessando a nova página URL.....Ok')
-    browser.switch_to.new_window(url)
-    browser.get(URL_MAIN+url)
+    browser.switch_to.new_window()
+    ACTUAL_URL = URL_MAIN+url
+    browser.get(ACTUAL_URL)
     sleep(5)
 
     ''' ENCONTRANDO OS BOTÕES PARA FILTRAR A PAGINA '''
@@ -98,14 +74,14 @@ for index, url in enumerate(VARS_URLS):
     filter_seasons = browser.find_element(
         By.XPATH, '//div[@data-dropdown-block="FOOTBALL_COMPSEASON"]')
     filter_seasons.click()
-    sleep(1)
+    sleep(2)
     print('Botão de Filter...Ok')
 
     # Selecionando o botão de todas as temporadas
     all_seasons = browser.find_element(
         By.XPATH, '//li[@data-option-name="All Seasons"]')
     all_seasons.click()
-    sleep(1)
+    sleep(2)
     print('Botão de All Seasons...Ok')
 
     # Encontrando o valor do botão que aciona a proxima pagina
@@ -113,51 +89,71 @@ for index, url in enumerate(VARS_URLS):
         By.XPATH, '//div[@class="paginationBtn paginationNextContainer"]')
     print('Botão de Next Page...Ok')
 
+    # Definindo a Função que extrai os dados de cada tabela
+    def return_rows(list_data: list):
+        elemento = browser.find_elements(By.XPATH, "//tbody \
+                [@class='stats-table__container statsTableContainer']")
+        for elementos in elemento:
+            FIND = elementos.text.split('\n')
+            list_data.append(FIND)
+        return list_data
+
+    # Definindo a Função que salva os dados no excel
+    def save_to_excel(list: list):
+        planilha = []
+
+        for lista_interna in list:
+            # Dividir a lista interna em partes de 5 elementos
+            partes = [lista_interna[i:i+5]
+                      for i in range(0, len(lista_interna), 5)]
+
+            # Adicionar cada parte como uma linha na planilha
+            planilha.extend(partes)
+
+        df = pd.DataFrame(planilha)
+
+        writer = pd.ExcelWriter(f'Players_{url}.xlsx', engine='openpyxl')
+
+        df.to_excel(writer, sheet_name='Sheet1', index=False)
+
+        writer.close()
+
+        return None
+
     # Loop While que percorre as paginas e chama a função de extração
     while True:
 
         try:
-            print('Extraindo Dados.....')
-
-            elemento = browser.find_elements(By.XPATH, "//tbody \
-            [@class='stats-table__container statsTableContainer']")
-            for elementos in elemento:
-                find1 = elementos.text.split('\n')
-                lista_dados.append(find1)
-                find1 = ''
-
+            CONT += 1
+            print(f'Extraindo Dados de {url}.....PG-{CONT}')
+            return_rows(LISTA_DADOS)
             next_page_button.click()
-            sleep(1)
-
-            if WebDriverWait(browser, 5).until(
+            sleep(0.5)
+            if WebDriverWait(browser, 1).until(
                 EC.presence_of_element_located((By.XPATH, '//div[@class=\
                                 "paginationBtn paginationNextContainer"]'))
             ):
                 continue
+            else:
+                raise Exception
 
         except Exception:
-            lista_dados = []
-
+            CONT += 1
+            print(f'Extraindo Ultimos Dados de {url}.....PG-{CONT}')
+            return_rows(LISTA_DADOS)
             next_page_button.click()
-            print('Extraindo Dados.....')
-
-            elemento = browser.find_elements(By.XPATH, "//tbody \
-            [@class='stats-table__container statsTableContainer']")
-            for elementos in elemento:
-                find2 = elementos.text.split('\n')
-                lista_dados.append(find2)
-                find2 = ''
-            sleep(1)
-
-            print('Exception Passed')
+            print('Exception Passed, Move to Saving...')
             break
-
+    CONT = 0
     # invocando a função que salva os dados na planilha
     print('Salvando dados no Excel....')
-    save_to_excel(lista_dados)
+    save_to_excel(LISTA_DADOS)
+    LISTA_DADOS = []
+    print(f'Dados Salvos em: Players_{url}')
 
     # Mensagens de Finalização
     print(f'SCRAPING DE {url} FINALIZADO')
     print('Mudando de Janela....')
 
+print('Ultima Janela Colect....Ok')
 print('SCRAPING COMPLETO')
