@@ -21,13 +21,13 @@ ROOT_CHROME_DRIVER = str(ROOT_FILE)
 
 """ DEFININDO AS CONSTANTS DO SCRAPING"""
 URL_MAIN = str('https://www.premierleague.com/stats/top/players/')
-VARS_URLS = ['goals', 'goal_assist',
+VARS_URLS = ['goal_assist', 'goals',
              'clean_sheet', 'appearances', 'mins_played']
 XPATH_COOKIES = '//button[@id="onetrust-accept-btn-handler"]'
 XPATH_ADVERTS = '//a[@id="advertClose"]'
 XPATH_FILTER_SEASONS = '//div[@data-dropdown-block="FOOTBALL_COMPSEASON"]'
 XPATH_ALL_SEASONS = '//li[@data-option-name="All Seasons"]'
-XPATH_DATA = '//tbody[@class="statsTableContainer"]'
+XPATH_DATA = '//tbody[@class="stats-table__container statsTableContainer"]'
 XPATH_NEXT_PAGE = '//div[@class="paginationBtn paginationNextContainer"]'
 XPATH_PLAYER_INFO = '//a[@class="playerName"]'
 ACTUAL_URL = ''
@@ -107,8 +107,8 @@ def return_rows(list_data: list, Xpath_data: str, Find: list):
 
 
 # Definindo a função que retorna o link da URL dos Escudos
-def return_Image(list_url: list, Xpath_Team_info: str):
-    elementos = browser.find_elements(By.XPATH, Xpath_Team_info)
+def return_Image(list_url: list, Xpath_player_info: str):
+    elementos = browser.find_elements(By.XPATH, Xpath_player_info)
     for elemento in elementos:
         link_club = elemento.get_attribute('href')
         link_text = str(link_club).strip()
@@ -117,12 +117,13 @@ def return_Image(list_url: list, Xpath_Team_info: str):
         page_content = response.text
 
         soup = BeautifulSoup(page_content, 'html.parser')
-        picture = soup.find('img', {'class': 'img'})
+        url_player = soup.find('img', {'class': 'img'})
 
-        if picture:
-            picture_player = picture.get('src')
+        if url_player:
+            picture_player = url_player.get('src')
             list_url.append(picture_player)
             pass
+
     return list_url
 
 
@@ -131,8 +132,7 @@ def save_to_excel(list_dados: list, list_url: list):
     planilha = []
     for lista_interna in list_dados:
         # Dividir a lista interna em partes de 5 elementos
-        partes = [lista_interna[i:i+5]
-                    for i in range(0, len(lista_interna), 5)]
+        partes = [lista_interna[i:i+5] for i in range(0, len(lista_interna), 5)]
 
         # Adicionar cada parte como uma linha na planilha
         planilha.extend(partes)
