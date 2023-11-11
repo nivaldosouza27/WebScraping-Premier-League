@@ -21,7 +21,8 @@ ROOT_CHROME_DRIVER = str(ROOT_FILE)
 
 """ DEFININDO AS CONSTANTS DO SCRAPING"""
 URL_MAIN = str('https://www.premierleague.com/stats/top/clubs/')
-VARS_URLS = ['wins', 'losses', 'goals', 'clean_sheet', 'goals_conceded']
+# VARS_URLS = ['wins', 'losses', 'goals', 'clean_sheet', 'goals_conceded']
+VARS_URLS = ['goals_conceded']
 XPATH_COOKIES = '//button[@id="onetrust-accept-btn-handler"]'
 XPATH_ADVERTS = '//a[@id="advertClose"]'
 XPATH_FILTER_SEASONS = '//div[@data-dropdown-block="FOOTBALL_COMPSEASON"]'
