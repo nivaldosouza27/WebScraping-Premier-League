@@ -21,8 +21,9 @@ ROOT_CHROME_DRIVER = str(ROOT_FILE)
 
 """ DEFININDO AS CONSTANTS DO SCRAPING"""
 URL_MAIN = str('https://www.premierleague.com/stats/top/players/')
-VARS_URLS = ['goal_assist', 'goals',
-             'clean_sheet', 'appearances', 'mins_played']
+VARS_URLS = ['appearances']
+# VARS_URLS = ['appearances', 'goal_assist', 'goals',
+#              'clean_sheet', 'mins_played']
 XPATH_COOKIES = '//button[@id="onetrust-accept-btn-handler"]'
 XPATH_ADVERTS = '//a[@id="advertClose"]'
 XPATH_FILTER_SEASONS = '//div[@data-dropdown-block="FOOTBALL_COMPSEASON"]'
@@ -30,6 +31,7 @@ XPATH_ALL_SEASONS = '//li[@data-option-name="All Seasons"]'
 XPATH_DATA = '//tbody[@class="stats-table__container statsTableContainer"]'
 XPATH_NEXT_PAGE = '//div[@class="paginationBtn paginationNextContainer"]'
 XPATH_PLAYER_INFO = '//a[@class="playerName"]'
+XPATH_IMAGE = '//img[@class="img"]'
 ACTUAL_URL = ''
 FIND_ROW = []
 FIND_IMAGE = []
@@ -107,23 +109,22 @@ def return_rows(list_data: list, Xpath_data: str, Find: list):
 
 
 # Definindo a função que retorna o link da URL dos Escudos
-def return_Image(list_url: list, Xpath_player_info: str):
+def return_Image(list_url: list, Xpath_player_info: str, Xpath_image: str):
     elementos = browser.find_elements(By.XPATH, Xpath_player_info)
     for elemento in elementos:
         link_club = elemento.get_attribute('href')
         link_text = str(link_club).strip()
 
-        response = requests.get(link_text)
-        page_content = response.text
+        browser.get(link_text)
+        sleep(1)
 
-        soup = BeautifulSoup(page_content, 'html.parser')
-        url_player = soup.find('img', {'class': 'img'})
+        player_image = browser.find_element(By.XPATH, Xpath_image)
+        player_image_src = player_image.get_attribute("src")
+        list_url.append(player_image_src)
 
-        if url_player:
-            picture_player = url_player.get('src')
-            list_url.append(picture_player)
-            pass
-
+        browser.back()
+        sleep(1)
+        continue
     return list_url
 
 
@@ -191,14 +192,14 @@ for index, url in enumerate(VARS_URLS):
 
         try:
             CONT += 1
-            sleep(1)
+            sleep(1.5)
             print(f'Extraindo Dados de {url}.....PG-{CONT}')
             return_rows(LISTA_DADOS, XPATH_DATA, FIND_ROW)
             print(f'Extraindo URLs de {url}.....PG-{CONT}')
-            return_Image(LISTA_URL, XPATH_PLAYER_INFO)
+            return_Image(LISTA_URL, XPATH_PLAYER_INFO, XPATH_IMAGE)
             print('Proxima Tabela....')
             click_btn_window(XPATH_NEXT_PAGE)
-            sleep(1)
+            sleep(1.5)
 
             if check_element_is_visible(XPATH_NEXT_PAGE):
                 print('Next Button..Ok')
@@ -209,10 +210,11 @@ for index, url in enumerate(VARS_URLS):
 
         except Exception:
             CONT += 1
+            sleep(1.5)
             print(f'Extraindo Ultimos Dados de {url}.....PG-{CONT}')
             return_rows(LISTA_DADOS, XPATH_DATA, FIND_ROW)
             print(f'Extraindo Ultimas URLs de {url}.....PG-{CONT}')
-            return_Image(LISTA_URL, XPATH_PLAYER_INFO)
+            return_Image(LISTA_URL, XPATH_PLAYER_INFO, XPATH_IMAGE)
             print('Exception Passed, Move to Saving...')
             break
     CONT = 0
